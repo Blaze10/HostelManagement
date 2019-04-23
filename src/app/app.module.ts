@@ -28,6 +28,7 @@ import { AdminLoginComponent } from './pages/admin-login/admin-login.component';
 import { AdminRegisterComponent } from './pages/admin-login/admin-register/admin-register.component';
 import { HomeComponent } from './pages/home/home.component';
 import { NgxPaginationModule } from 'ngx-pagination';
+import { AboutUsComponent } from './pages/about-us/about-us.component';
 
 @NgModule({
   declarations: [
@@ -49,7 +50,8 @@ import { NgxPaginationModule } from 'ngx-pagination';
     UserLoginComponent,
     AdminLoginComponent,
     AdminRegisterComponent,
-    HomeComponent
+    HomeComponent,
+    AboutUsComponent
   ],
   imports: [
     BrowserModule,

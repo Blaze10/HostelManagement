@@ -1,4 +1,4 @@
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormGroup, FormControl, Validators, EmailValidator } from '@angular/forms';
 import { AlertifyService } from './../../../_services/alertify.service';
 import { StreamsService } from './../../../_services/streams.service';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -19,12 +19,14 @@ export class CreateUserComponent implements OnInit {
   mode = 'new';
   editedUser: User;
   editedIndex = '';
+  allUsers: User[];
 
   constructor(private router: Router, private streamService: StreamsService,
               private alertify: AlertifyService, private userService: UsersService,
               private route: ActivatedRoute) { }
 
   ngOnInit() {
+    this.getAllUsers();
     this.streamService.getStreamList().valueChanges().subscribe(
       ((list) => {
         this.streamsDD = list;
@@ -62,21 +64,60 @@ export class CreateUserComponent implements OnInit {
     });
   }
 
+  getAllUsers() {
+    this.userService.getUsersList().valueChanges().subscribe((users: User[]) => {
+      this.allUsers = users;
+    }, err => {
+      console.log(err);
+    });
+  }
+
   onSubmit() {
     this.showLoader = true;
     if (this.mode === 'new') {
-      this.userService.insertUsers(this.userForm.value).then(() => {
+
+      const user = this.userForm.value;
+      let isValidUser = true;
+      this.allUsers.forEach(element => {
+      if (user.email.toLowerCase().trim() === element.email.toLowerCase().trim()) {
+        this.alertify.error('User with this email id already exists');
+        isValidUser = false;
+      } else if (user.contact === element.contact) {
+        this.alertify.error('User with this contact alreadt exists');
+        isValidUser = false;
+      }
+    });
+
+      if (isValidUser) {
+        this.userService.insertUsers(this.userForm.value).then(() => {
+          this.showLoader = false;
+          this.alertify.success('User creation successful');
+          this.router.navigate(['/usersList']);
+        }).catch((err) => {
+          this.showLoader = false;
+          console.log(err);
+          this.alertify.error('Oops some error occured');
+        }).finally(() => {
+          this.showLoader = false;
+        });
+      } else {
         this.showLoader = false;
-        this.alertify.success('User creation successful');
-        this.router.navigate(['/usersList']);
-      }).catch((err) => {
-        this.showLoader = false;
-        console.log(err);
-        this.alertify.error('Oops some error occured');
-      }).finally(() => {
-        this.showLoader = false;
-      });
+      }
     } else if (this.mode === 'edit') {
+
+      const user = this.userForm.value;
+      let isValidUser = true;
+      this.allUsers.forEach(element => {
+      if (user.email.toLowerCase().trim() === element.email.toLowerCase().trim() && this.userForm.get('email').dirty) {
+        this.alertify.error('User with this email id already exists');
+        isValidUser = false;
+      } else if (user.contact === element.contact && this.userForm.get('email').dirty) {
+        this.alertify.error('User with this contact alreadt exists');
+        isValidUser = false;
+      }
+    });
+
+      if (isValidUser) {
       this.userService.editUser(this.editedIndex, {...this.userForm.value, 'roomNo': this.editedUser.roomNo})
       .then(() => {
         this.showLoader = false;
@@ -89,6 +130,9 @@ export class CreateUserComponent implements OnInit {
       }).finally(() => {
         this.showLoader = false;
       });
+    } else {
+      this.showLoader = false;
+    }
     }
 
   }
